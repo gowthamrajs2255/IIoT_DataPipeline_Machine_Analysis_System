@@ -7,6 +7,7 @@ services:
       - "9000:9000"
       - "8812:8812"
       - "9009:9009"
+      - "9003:9003"
     environment:
       - QDB_METRICS_ENABLED=true
     volumes:
@@ -86,15 +87,6 @@ services:
     volumes:
       - ./:/app
     working_dir: /app
-
-  mosquitto-exporter:
-    image: kpetrem/mqtt-exporter
-    ports:
-    - "9234:9234"
-    environment:
-      - MQTT_ADDRESS=mosquitto  
-      - MQTT_PORT=1883
-    restart: unless-stopped
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest

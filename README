@@ -1,33 +1,113 @@
 # IIoT Data Pipeline & Machine Analysis
 
-## Run locally (Python)
+This repo implements a complete IIoT data pipeline:
 
-1. Create and activate a virtual environment
+- **Machine Simulator** publishes encrypted telemetry to MQTT
+- **Local Mosquitto broker** ingests data, optional bridge to EMQX Cloud
+- **Consumer** decrypts + validates + writes to **QuestDB**
+- **FastAPI Analytics service** exposes operational endpoints
+- **Grafana/Prometheus** can visualize + monitor the system
+
+---
+
+## Architecture (diagram)
+
+```mermaid
+flowchart LR
+  subgraph Edge
+    SM[Machine Simulator]
+    MS[Local Mosquitto]
+  end
+
+  subgraph Cloud[Optional Cloud Bridge]
+    EMQX[EMQX Cloud MQTT]
+  end
+
+  subgraph Backend
+    CU[Consumer (decrypt + validate)]
+    QDB[QuestDB]
+    API[FastAPI Analytics]
+  end
+
+  SM -->|MQTT publish| MS
+  MS -->|MQTT bridge (optional)| EMQX
+  MS -->|MQTT subscribe| CU
+  EMQX -->|MQTT subscribe| CU
+  CU -->|writes| QDB
+  API -->|reads| QDB
+
+  style Edge fill:#f8f9fa,stroke:#333
+  style Cloud fill:#eaf2ff,stroke:#333
+  style Backend fill:#eaf7ee,stroke:#333
+```
+
+---
+
+## What�s included
+
+| Component | Purpose |
+|---|---|
+| `src/simulator/machine_simulator.py` | Generates encrypted telemetry and publishes to MQTT topics. |
+| `src/consumer/mqtt_consumer.py` | Decrypts messages, validates them, writes to QuestDB. |
+| `src/consumer/init_db.py` | Creates `machine_data` table in QuestDB if missing. |
+| `api/` | FastAPI analytics service with live/summary endpoints. |
+| `docker-compose.yml` | Runs Mosquitto + QuestDB + consumer + simulator + API. |
+
+---
+
+## Quick Start (Docker - recommended)
+
+1. Build and start everything:
+
+```powershell
+docker compose up --build -d
+```
+
+2. Verify services:
+- QuestDB UI: http://localhost:9000
+- Analytics API: http://localhost:8000/docs
+
+3. Confirm data is flowing:
+- `GET http://localhost:8000/machines/live`
+
+---
+
+## Quick Start (Local Python)
+
+> This is useful when you want to run without Docker.
+
+1. Create and activate a virtual environment:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-2. Install dependencies
+2. Install dependencies:
 
 ```powershell
 pip install -r requirements.txt
 ```
 
-3. Initialize the QuestDB schema (required once)
+3. Start Mosquitto & QuestDB (Docker recommended):
+
+```powershell
+docker compose up -d mosquitto questdb
+```
+
+4. Initialize QuestDB schema:
 
 ```powershell
 python src/consumer/init_db.py
 ```
 
-4. Start the simulator (publishes MQTT messages)
+5. Start the simulator:
 
 ```powershell
 python src/simulator/machine_simulator.py
 ```
 
-5. Start the consumer (stores messages to QuestDB)
+6. Start the consumer:
 
 ```powershell
 python src/consumer/mqtt_consumer.py
@@ -35,20 +115,62 @@ python src/consumer/mqtt_consumer.py
 
 ---
 
-## Run with Docker (recommended)
+## Configuration (via `.env`)
 
-1. Build and start all services:
+Edit `.env` to configure the environment. Key settings:
 
-```powershell
-docker compose up --build
+```dotenv
+# Local MQTT
+MQTT_HOST=mosquitto
+MQTT_PORT=1883
+
+# (Optional) EMQX Cloud
+EMQX_HOST=<your-emqx-host>
+EMQX_PORT=8883
+EMQX_USER=<user>
+EMQX_PASS=<pass>
+
+# QuestDB
+DB_HOST=questdb
+DB_PORT=8812
+DB_USER=admin
+DB_PASS=quest
+DB_NAME=qdb
+
+# Encryption (must match simulator)
+ENCRYPTION_KEY=<base64-fernet-key>
 ```
 
-2. Open QuestDB web console:
-
-- http://localhost:9000
-
-3. Open the Analytics API docs:
-
-- http://localhost:8000/docs
+**Note:** If you want the consumer to read from EMQX Cloud instead of local Mosquitto, set `MQTT_HOST`/`MQTT_PORT` (or set the `EMQX_*` vars and enable the overrides in `docker-compose.yml`).
 
 ---
+
+## Analytics API Endpoints
+
+- `GET /` � health check
+- `GET /machines/live` � latest record per machine
+- `GET /machines/summary` � usage summary per machine
+- `GET /machines/{machine_id}/temperature` � temperature timeline
+
+---
+
+## Security & Secrets
+
+- `ENCRYPTION_KEY` is used for Fernet encryption/decryption.
+- Do **not** commit certificates or private keys to Git; `.gitignore` now excludes `src/mosquitto/certs/`.
+
+---
+
+## Running Tests (Optional)
+
+This repo doesn't include automated tests currently, but you can validate manually by:
+1. Running `docker compose up --build`
+2. Confirming API endpoints respond and data shows in QuestDB.
+
+---
+
+## Next Improvements (Optional)
+
+- Add Prometheus + alerting (consumer + broker + DB metrics)
+- Add unit tests + CI workflow
+- Add auth/ACL to the FastAPI service

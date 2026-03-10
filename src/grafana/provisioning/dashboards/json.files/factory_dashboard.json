@@ -328,7 +328,7 @@
             }
           },
           "queryType": "sql",
-          "rawSql": "SELECT machine_id, max(production_count) as Total\r\nFROM machine_data\r\nWHERE $__timeFilter(timestamp)\r\nGROUP BY machine_id\r\n",
+          "rawSql": "SELECT machine_id, max(production_count) as Total\r\nFROM machine_data\r\nWHERE $__timeFilter(timestamp)\r\nGROUP BY machine_id\r\nORDER BY machine_id",
           "refId": "A",
           "selectedFormat": 2
         }
@@ -595,6 +595,6 @@
   "timezone": "browser",
   "title": "IIOT_DATA_PIPELINE",
   "uid": "adqqjsb",
-  "version": 2,
+  "version": 1,
   "weekStart": ""
 }

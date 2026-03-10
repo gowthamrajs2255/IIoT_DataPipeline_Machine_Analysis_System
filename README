@@ -1,0 +1,54 @@
+# IIoT Data Pipeline & Machine Analysis
+
+## Run locally (Python)
+
+1. Create and activate a virtual environment
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+2. Install dependencies
+
+```powershell
+pip install -r requirements.txt
+```
+
+3. Initialize the QuestDB schema (required once)
+
+```powershell
+python src/consumer/init_db.py
+```
+
+4. Start the simulator (publishes MQTT messages)
+
+```powershell
+python src/simulator/machine_simulator.py
+```
+
+5. Start the consumer (stores messages to QuestDB)
+
+```powershell
+python src/consumer/mqtt_consumer.py
+```
+
+---
+
+## Run with Docker (recommended)
+
+1. Build and start all services:
+
+```powershell
+docker compose up --build
+```
+
+2. Open QuestDB web console:
+
+- http://localhost:9000
+
+3. Open the Analytics API docs:
+
+- http://localhost:8000/docs
+
+---

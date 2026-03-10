@@ -1,0 +1,111 @@
+services:
+  questdb:
+    image: questdb/questdb:latest
+    container_name: questdb
+    restart: always
+    ports:
+      - "9000:9000"
+      - "8812:8812"
+      - "9009:9009"
+    environment:
+      - QDB_METRICS_ENABLED=true
+    volumes:
+      - questdb_data:/var/lib/questdb
+
+  mosquitto:
+    image: eclipse-mosquitto
+    container_name: mosquitto
+    restart: always
+    ports:
+      - "1883:1883"
+      - "8883:8883"
+    volumes:
+      - ./src/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./src/mosquitto/certs:/mosquitto/config/certs
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_INSTALL_PLUGINS=questdb-questdb-datasource
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+      - TZ=UTC
+    depends_on:
+      - questdb
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./src/grafana/provisioning:/etc/grafana/provisioning
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+  api:
+    build: .
+    container_name: iiot_api
+    restart: on-failure
+    ports:
+      - "8000:8000"
+    depends_on:
+      - questdb
+    env_file:
+      - .env
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000
+    volumes:
+      - .:/app
+  consumer:
+    build: .
+    container_name: iiot_consumer
+    restart: on-failure
+    depends_on:
+      - questdb
+    env_file:
+      - .env
+    command: python src/consumer/mqtt_consumer.py
+    volumes:
+      - ./:/app
+    working_dir: /app
+
+  simulator:
+    build: .
+    container_name: iiot_simulator
+    restart: on-failure
+    depends_on:
+      - mosquitto
+    env_file:
+      - .env
+    command: python src/simulator/machine_simulator.py
+    volumes:
+      - ./:/app
+    working_dir: /app
+
+  mosquitto-exporter:
+    image: kpetrem/mqtt-exporter
+    ports:
+    - "9234:9234"
+    environment:
+      - MQTT_ADDRESS=mosquitto  
+      - MQTT_PORT=1883
+    restart: unless-stopped
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      
+volumes:
+  questdb_data:
+  grafana_data:

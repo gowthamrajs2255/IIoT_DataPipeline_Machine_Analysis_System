@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+
+  - job_name: "questdb"
+    static_configs:
+      - targets: ["questdb:9003"]
+
+  - job_name: "fastapi"
+    static_configs:
+      - targets: ["api:8000"]
+
+  - job_name: "simulator"
+    static_configs:
+      - targets: ["simulator:8001"]
+
+  - job_name: "consumer"
+    static_configs:
+      - targets: ["consumer:8002"]
+
+  - job_name: "mosquitto"
+    static_configs:
+      - targets: ["mosquitto-exporter:9234"]
+
+  - job_name: "docker"
+    static_configs:
+      - targets: ["cadvisor:8080"]

@@ -1,0 +1,22 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    uid: Prometheus
+    url: http://prometheus:9090
+    isDefault: true
+
+  - name: QuestDB
+    type: questdb-questdb-datasource
+    jsonData:
+      server: questdb
+      url: http://questdb:8812
+      database  : qdb
+      user: admin
+      port: 8812
+      username: admin
+      tlsMode: disable
+    secureJsonData:
+      password: quest

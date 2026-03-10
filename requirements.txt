@@ -1,0 +1,8 @@
+aiomqtt
+asyncpg
+python-dotenv
+cryptography
+fastapi
+uvicorn[standard]
+prometheus-fastapi-instrumentator
+prometheus-client

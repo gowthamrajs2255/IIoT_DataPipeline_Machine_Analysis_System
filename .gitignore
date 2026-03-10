@@ -17,9 +17,6 @@ venv/
 # Docker
 docker-compose.override.yml
 
-# Certificates (do not commit private keys/ca)
-src/mosquitto/certs/
-
 # OS files
 .DS_Store
 Thumbs.db

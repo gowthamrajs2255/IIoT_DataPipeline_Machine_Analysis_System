@@ -10,39 +10,6 @@ This repo implements a complete IIoT data pipeline:
 
 ---
 
-## Architecture (diagram)
-
-```mermaid
-flowchart LR
-  subgraph Edge
-    SM[Machine Simulator]
-    MS[Local Mosquitto]
-  end
-
-  subgraph Cloud[Optional Cloud Bridge]
-    EMQX[EMQX Cloud MQTT]
-  end
-
-  subgraph Backend
-    CU[Consumer (decrypt + validate)]
-    QDB[QuestDB]
-    API[FastAPI Analytics]
-  end
-
-  SM -->|MQTT publish| MS
-  MS -->|MQTT bridge (optional)| EMQX
-  MS -->|MQTT subscribe| CU
-  EMQX -->|MQTT subscribe| CU
-  CU -->|writes| QDB
-  API -->|reads| QDB
-
-  style Edge fill:#f8f9fa,stroke:#333
-  style Cloud fill:#eaf2ff,stroke:#333
-  style Backend fill:#eaf7ee,stroke:#333
-```
-
----
-
 ## What�s included
 
 | Component | Purpose |
@@ -124,7 +91,7 @@ Edit `.env` to configure the environment. Key settings:
 MQTT_HOST=mosquitto
 MQTT_PORT=1883
 
-# (Optional) EMQX Cloud
+# EMQX Cloud
 EMQX_HOST=<your-emqx-host>
 EMQX_PORT=8883
 EMQX_USER=<user>
@@ -137,13 +104,17 @@ DB_USER=admin
 DB_PASS=quest
 DB_NAME=qdb
 
+# Grafana SMTP (for alerts)
+GF_SMTP_HOST=smtp.gmail.com:587
+GF_SMTP_USER=<your-email>
+GF_SMTP_PASSWORD=<app-password>
+GF_SMTP_FROM_ADDRESS=<your-email>
+GF_SMTP_FROM_NAME=IIoT Alert System
+
 # Encryption (must match simulator)
 ENCRYPTION_KEY=<base64-fernet-key>
+
 ```
-
-**Note:** If you want the consumer to read from EMQX Cloud instead of local Mosquitto, set `MQTT_HOST`/`MQTT_PORT` (or set the `EMQX_*` vars and enable the overrides in `docker-compose.yml`).
-
----
 
 ## Analytics API Endpoints
 

@@ -1,6 +1,5 @@
 aiomqtt
 asyncpg
-python-dotenv
 cryptography
 fastapi
 uvicorn[standard]

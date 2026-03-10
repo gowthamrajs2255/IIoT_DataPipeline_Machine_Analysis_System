@@ -34,6 +34,12 @@ services:
       - GF_INSTALL_PLUGINS=questdb-questdb-datasource
       - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
       - TZ=UTC
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=${GF_SMTP_HOST}
+      - GF_SMTP_USER=${GF_SMTP_USER}
+      - GF_SMTP_PASSWORD=${GF_SMTP_PASSWORD}
+      - GF_SMTP_FROM_ADDRESS=${GF_SMTP_FROM_ADDRESS}
+      - GF_SMTP_FROM_NAME=${GF_SMTP_FROM_NAME}
     depends_on:
       - questdb
     volumes:
